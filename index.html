@@ -110,6 +110,7 @@
     content:""; position:absolute; inset:6px; border:1px solid rgba(201,162,77,0.12);
     border-radius:4px; pointer-events:none;
   }
+  .panel.draw-panel::before{content:none;}
   label{display:block; font-size:0.78rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px;}
   input[type=text], textarea{
     width:100%; background:#0e0b07; border:1px solid var(--hairline); color:var(--cream);
@@ -269,7 +270,7 @@
   <section id="draw">
     <span class="eyebrow">Sketch pad</span>
     <h2 style="font-size:2rem; margin-bottom:26px; color:var(--cream);">draw me a pretty picture</h2>
-    <div class="panel">
+    <div class="panel draw-panel">
       <div class="draw-controls">
         <div class="ctrl-group" style="flex:1;">
           <label for="thickness">brush thickness — <span id="thicknessVal">6</span>px</label>
@@ -299,6 +300,7 @@
 
       <div class="draw-actions">
         <button class="gold-btn" id="sendDrawBtn">send drawing</button>
+        <button class="ghost-btn" id="undoBtn">undo</button>
         <button class="ghost-btn" id="clearBtn">clear canvas</button>
       </div>
       <div class="status-msg" id="drawStatus"></div>
@@ -439,6 +441,18 @@ let last = null;
 let currentColor = 'rgb(201,162,77)';
 let currentThickness = 6;
 
+const undoStack = [];
+const MAX_UNDO = 30;
+function saveUndoState(){
+  undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+  if(undoStack.length > MAX_UNDO) undoStack.shift();
+}
+function undoLast(){
+  if(!undoStack.length) return;
+  const img = undoStack.pop();
+  ctx.putImageData(img, 0, 0);
+}
+
 function canvasPos(evt){
   const rect = canvas.getBoundingClientRect();
   const scaleX = canvas.width / rect.width;
@@ -449,6 +463,7 @@ function canvasPos(evt){
 function startDraw(evt){
   evt.preventDefault();
   drawing = true;
+  saveUndoState();
   last = canvasPos(evt);
 }
 function moveDraw(evt){
@@ -514,7 +529,7 @@ function hsvToRgb(h, s, v){
   return { r:(r+m)*255, g:(g+m)*255, b:(b+m)*255 };
 }
 
-let hue = 42, sat = 0.68, val = 1;
+let hue = 42, sat = 0.68, val = 0;
 
 function drawWheel(){
   const img = wheelCtx.createImageData(wheelSize, wheelSize);
@@ -651,8 +666,15 @@ drawWheel();
 updateColorFromState();
 updateThicknessPreview();
 
+// undo
+document.getElementById('undoBtn').addEventListener('click', () => {
+  undoLast();
+});
+
 // clear
 document.getElementById('clearBtn').addEventListener('click', () => {
+  if(!confirm('Clear the whole canvas? This cannot be undone once you leave the page.')) return;
+  saveUndoState();
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0,0,canvas.width,canvas.height);
   document.getElementById('drawStatus').textContent = '';
