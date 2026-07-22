@@ -204,7 +204,7 @@ canvas#pad{
     display:block;
 }
 .canvas-frame{
-    border:1px solid var(--gold-deep); padding:10px; border-radius:16px;
+    border:none; padding:10px; border-radius:16px;
     background:linear-gradient(180deg, rgba(201,162,77,0.05), transparent);
 }
   .draw-actions{display:flex; gap:12px; margin-top:18px; flex-wrap:wrap;}
@@ -670,7 +670,7 @@ function pickFromValueBarEvent(evt){
   val = 1 - Math.min(Math.max(y / valueBar.height, 0), 1);
   updateColorFromState();
 }
-canvas#pad{
+
 let wheelDragging = false, barDragging = false;
 wheelCanvas.addEventListener('mousedown', e => { wheelDragging = true; pickFromWheelEvent(e); });
 window.addEventListener('mousemove', e => { if(wheelDragging) pickFromWheelEvent(e); if(barDragging) pickFromValueBarEvent(e); });
